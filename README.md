@@ -22,6 +22,10 @@ mensagem de Feliz Natal:
                  FELIZ NATAL 2026!!
 ```
 
+## Resultado
+
+![Árvore de Natal ASCII](christmas_tree_1794908419.png)
+
 ## Funcionalidades
 
 - Árvore formada por pontos e caracteres ASCII coloridos.
