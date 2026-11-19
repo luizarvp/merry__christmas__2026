@@ -31,7 +31,7 @@ mensagem de Feliz Natal:
 - Árvore formada por pontos e caracteres ASCII coloridos.
 - Rotação contínua em 3D.
 - Animação de crescimento da base até o topo.
-- Garlandas, bolas, luzes, estrela e presentes.
+- Guirlandas, bolas, luzes, estrela e presentes.
 - Fundo com estrelas.
 - Mensagem animada `FELIZ NATAL 2026!!`.
 - Salvamento de screenshots em PNG.
@@ -81,7 +81,7 @@ A sequência visual da animação é:
 
 1. Crescimento dos galhos.
 2. Aparição do tronco.
-3. Garlandas e bolas.
+3. Guirlandas e bolas.
 4. Luzes piscando.
 5. Estrela no topo.
 6. Mensagem de Natal.

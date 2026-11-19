@@ -46,7 +46,7 @@ W, H = COLS * CW, ROWS * CH
 MONO = "consolas,menlo,dejavusansmono,couriernew,monospace"
 HINT = "Space pause · R restart · S screenshot · Esc quit"
 DIM, ACCENT, SIGN = (96, 104, 122), (255, 196, 90), (176, 168, 196)
-FPS = 30
+FPS = 240
 RAMP = " .:-=+*#%@"
 
 # ---------------------------------------------------------------- scene --
@@ -373,7 +373,6 @@ def starfield_layer(cols, rows, t, srng):
 def composite(pos, rgb, cols, rows, extra_cells=None):
     char = [" "] * (cols * rows)
     rgb_grid = np.zeros((rows, cols, 3))
-    depth = np.full((rows, cols), 1e9)
     lit = np.zeros((rows, cols), dtype=bool)
 
     sx, sy, dep = project(pos, cols, rows, ASPECT)
@@ -381,16 +380,28 @@ def composite(pos, rgb, cols, rows, extra_cells=None):
     ok = (xi >= 0) & (xi < cols) & (yi >= 0) & (yi < rows)
     xi, yi, dep, rgb = xi[ok], yi[ok], dep[ok], rgb[ok]
 
-    order = np.argsort(-dep)
-    for k in order:
-        r, c = int(yi[k]), int(xi[k])
-        if dep[k] <= depth[r, c] + 0.035:
-            depth[r, c] = dep[k]
-            lum = (0.299 * rgb[k, 0] + 0.587 * rgb[k, 1] + 0.114 * rgb[k, 2]) / 255
-            b = float(np.clip(lum, 0, 1))
-            char[r * cols + c] = RAMP[min(len(RAMP) - 1, int(b * len(RAMP)))]
-            rgb_grid[r, c] = rgb[k]
-            lit[r, c] = True
+    flat = yi * cols + xi
+    if flat.size:
+        order = np.lexsort((dep, flat))
+        sorted_flat = flat[order]
+        sorted_rgb = rgb[order]
+        first = np.concatenate(([True], sorted_flat[1:] != sorted_flat[:-1]))
+        flat_cells = sorted_flat[first]
+        selected_rgb = sorted_rgb[first]
+        rows_used = flat_cells // cols
+        cols_used = flat_cells % cols
+
+        lum = (0.299 * selected_rgb[:, 0] +
+               0.587 * selected_rgb[:, 1] +
+               0.114 * selected_rgb[:, 2]) / 255
+        ramp_idx = np.clip((lum * len(RAMP)).astype(int),
+                           0, len(RAMP) - 1)
+        chars = np.asarray(list(RAMP))[ramp_idx]
+        for flat_cell, ch in zip(flat_cells, chars):
+            r, c = divmod(int(flat_cell), cols)
+            char[r * cols + c] = ch
+        rgb_grid[rows_used, cols_used] = selected_rgb
+        lit[rows_used, cols_used] = True
 
     if extra_cells:
         for r, c, ch, col in extra_cells:
@@ -406,7 +417,10 @@ def main():
     pygame.init()
     pygame.display.set_caption(TITLE)
     hud_h = 64
-    screen = pygame.display.set_mode((W, H + hud_h))
+    screen = pygame.display.set_mode(
+        (W, H + hud_h),
+        pygame.HWSURFACE | pygame.DOUBLEBUF
+    )
     clock = pygame.time.Clock()
     renderer = Renderer()
     star_rng = np.random.default_rng(3)
